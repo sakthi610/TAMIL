@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>தமிழ் AI நண்பன் 🤖</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'Noto Sans Tamil', sans-serif;
+    background: linear-gradient(135deg, #7b1e1e 0%, #b73e1b 40%, #e88b1d 100%);
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:16px;
+  }
+  .app {
+    width:100%; max-width:480px; height:92vh; max-height:760px;
+    background:#fffaf2; border-radius:24px; overflow:hidden;
+    display:flex; flex-direction:column;
+    box-shadow:0 20px 60px rgba(0,0,0,.35);
+  }
+  header {
+    background:linear-gradient(135deg,#a41212,#d9480f);
+    color:#fff; padding:16px 18px; display:flex; align-items:center; gap:12px;
+  }
+  .avatar {
+    width:48px; height:48px; border-radius:50%;
+    background:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:26px; flex-shrink:0;
+  }
+  header h1 { font-size:19px; font-weight:700; }
+  header p { font-size:12.5px; opacity:.9; }
+  .dot { display:inline-block; width:8px; height:8px; background:#4ade80; border-radius:50%; margin-right:5px; animation:blink 1.5s infinite; }
+  @keyframes blink { 50% { opacity:.4; } }
+  #chat { flex:1; overflow-y:auto; padding:16px 14px; display:flex; flex-direction:column; gap:10px; background:#fffaf2; }
+  .msg { max-width:82%; padding:11px 14px; border-radius:16px; font-size:15px; line-height:1.65; white-space:pre-wrap; word-wrap:break-word; }
+  .bot { background:#fff; border:1px solid #f0d9c0; border-bottom-left-radius:4px; align-self:flex-start; color:#3b2a20; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .user { background:linear-gradient(135deg,#c2410c,#ea580c); color:#fff; border-bottom-right-radius:4px; align-self:flex-end; }
+  .typing { background:#fff; border:1px solid #f0d9c0; padding:14px 18px; border-radius:16px; align-self:flex-start; display:flex; gap:5px; }
+  .typing span { width:8px; height:8px; background:#c2410c; border-radius:50%; animation:bounce 1.2s infinite; }
+  .typing span:nth-child(2){ animation-delay:.15s; } .typing span:nth-child(3){ animation-delay:.3s; }
+  @keyframes bounce { 0%,60%,100%{ transform:translateY(0);} 30%{ transform:translateY(-7px);} }
+  .chips { display:flex; gap:8px; padding:8px 14px; flex-wrap:wrap; background:#fffaf2; }
+  .chip {
+    background:#fff; border:1.5px solid #ea580c; color:#c2410c;
+    padding:6px 13px; border-radius:20px; font-size:13px; cursor:pointer;
+    font-family:inherit; font-weight:500; transition:.2s;
+  }
+  .chip:hover { background:#ea580c; color:#fff; }
+  .inputbar { display:flex; gap:8px; padding:12px 14px 16px; background:#fffaf2; align-items:center; }
+  #msg {
+    flex:1; border:2px solid #f0d9c0; border-radius:24px; padding:12px 16px;
+    font-size:15px; font-family:inherit; outline:none; background:#fff; color:#333;
+  }
+  #msg:focus { border-color:#ea580c; }
+  .btn {
+    width:48px; height:48px; border-radius:50%; border:none; cursor:pointer;
+    font-size:20px; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; transition:.2s;
+  }
+  #send { background:linear-gradient(135deg,#c2410c,#ea580c); color:#fff; }
+  #send:hover { transform:scale(1.07); }
+  #send:disabled { opacity:.5; cursor:wait; transform:none; }
+  #mic { background:#fff; border:2px solid #f0d9c0; }
+  #mic.listening { background:#fee2e2; border-color:#ef4444; animation:blink 1s infinite; }
+  footer { text-align:center; font-size:11px; color:#b0a090; padding:0 0 10px; background:#fffaf2; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="avatar">🦚</div>
+    <div>
+      <h1>தமிழ் AI நண்பன்</h1>
+      <p><span class="dot"></span>Sarvam AI • ஆன்லைன்</p>
+    </div>
+  </header>
+
+  <div id="chat"></div>
+
+  <div class="chips">
+    <button class="chip" onclick="quick('வணக்கம்! நீ யார்?')">👋 வணக்கம்</button>
+    <button class="chip" onclick="quick('ஒரு திருக்குறள் சொல்')">📜 திருக்குறள்</button>
+    <button class="chip" onclick="quick('குழந்தைகளுக்கு ஒரு சிறு கதை சொல்')">📖 கதை</button>
+    <button class="chip" onclick="quick('இன்றைய சமையல் குறிப்பு சொல்')">🍛 சமையல்</button>
+  </div>
+
+  <div class="inputbar">
+    <button class="btn" id="mic" title="குரலில் பேசுங்கள்">🎤</button>
+    <input id="msg" placeholder="தமிழில் எழுதுங்கள்..." autocomplete="off">
+    <button class="btn" id="send" title="அனுப்பு">➤</button>
+  </div>
+  <footer>⚡ Sarvam-105B மாதிரியால் இயங்குகிறது • இலவச AI</footer>
+</div>
+
+<script>
+const chat = document.getElementById('chat');
+const input = document.getElementById('msg');
+const sendBtn = document.getElementById('send');
+const micBtn = document.getElementById('mic');
+let history = [];
+
+function addMsg(text, who) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + who;
+  d.textContent = text;
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+  return d;
+}
+
+function showTyping() {
+  const d = document.createElement('div');
+  d.className = 'typing'; d.id = 'typing';
+  d.innerHTML = '<span></span><span></span><span></span>';
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+}
+function hideTyping() { document.getElementById('typing')?.remove(); }
+
+function speak(tamilText) {
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(tamilText);
+    u.lang = 'ta-IN'; u.rate = 0.95;
+    speechSynthesis.speak(u);
+  } catch(e) {}
+}
+
+async function send(text) {
+  text = (text ?? input.value).trim();
+  if (!text) return;
+  input.value = '';
+  addMsg(text, 'user');
+  history.push({role:'user', content:text});
+  showTyping();
+  sendBtn.disabled = true;
+  try {
+    const res = await fetch('/api/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({message:text, history:history.slice(0,-1)})
+    });
+    const data = await res.json();
+    hideTyping();
+    if (data.reply) {
+      addMsg(data.reply, 'bot');
+      history.push({role:'assistant', content:data.reply});
+    } else {
+      addMsg('⚠️ ' + (data.error || 'பிழை ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.'), 'bot');
+    }
+  } catch(e) {
+    hideTyping();
+    addMsg('⚠️ இணைய பிழை. மீண்டும் முயற்சிக்கவும்.', 'bot');
+  }
+  sendBtn.disabled = false;
+  input.focus();
+}
+
+function quick(t) { send(t); }
+
+sendBtn.onclick = () => send();
+input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+// 🎤 Voice input (Tamil)
+let rec = null;
+micBtn.onclick = () => {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('உங்கள் browser-ல் குரல் வசதி இல்லை. Chrome பயன்படுத்தவும்.'); return; }
+  if (rec) { rec.stop(); rec = null; micBtn.classList.remove('listening'); return; }
+  rec = new SR();
+  rec.lang = 'ta-IN';
+  rec.interimResults = false;
+  micBtn.classList.add('listening');
+  rec.onresult = e => {
+    const t = e.results[0][0].transcript;
+    input.value = t;
+    send(t);
+  };
+  rec.onend = () => { rec = null; micBtn.classList.remove('listening'); };
+  rec.onerror = () => { rec = null; micBtn.classList.remove('listening'); };
+  rec.start();
+};
+
+// Welcome message
+window.onload = () => {
+  addMsg('வணக்கம்! 🙏 நான் உங்கள் தமிழ் AI நண்பன். எதைப் பற்றி வேண்டுமானாலும் தமிழில் கேளுங்கள்!', 'bot');
+  input.focus();
+};
+</script>
+</body>
+</html>
